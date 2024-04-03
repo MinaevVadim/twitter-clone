@@ -25,10 +25,6 @@
 
 ### Установка
 
-Установка зависимостей из requirements.txt
-```
-pip install -r requirements.txt
-```
 Чтобы запустить приложение и базу данных, выполните следующую команду
 ```
 docker compose up -d
