@@ -36,9 +36,9 @@ async def load_media(
         session: AsyncSession = Depends(connect_db)
 ) -> dict[str, bool | int] | JSONResponse:
     if file and await file_check(file.filename):
-        url: Optional[str] = await upload_media(file, request)
+        url = await upload_media(file, request)
         if url:
-            add_file: Media = Media(media=url)
+            add_file = Media(media=url)
             session.add(add_file)
             await session.commit()
             return {'result': True, 'media_id': add_file.id}
@@ -58,7 +58,7 @@ async def load_media(
 async def give_image(
         image: Annotated[str, Path(title="The name of the image to get")]
 ) -> Any:
-    content: Optional[bytes] = await give_media(image)
+    content = await give_media(image)
     if content:
         return Response(content=content, media_type="image/png")
     return JSONResponse(

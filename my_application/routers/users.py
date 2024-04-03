@@ -14,6 +14,8 @@ from schemas import UserResponseBase, ResultBase
 from services import get_user_api_key, get_id_user, info_user_api_key, get_user_following,\
     info_user_id
 
+from my_application.utils import error_no_such
+
 logger: Logger = twitter_logging.add_logger(__name__)
 
 
@@ -35,13 +37,10 @@ async def create_follow(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user_api_key: Any = await get_user_api_key(session, api_key)
-    follower: Any = await get_id_user(session, id_user)
+    user_api_key = await get_user_api_key(session, api_key)
+    follower = await get_id_user(session, id_user)
     if user_api_key is None or follower is None:
-        logger.error('There is no such user or follower.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user or follower."})
+        error_no_such('follower')
     user_api_key.following.append(follower)
     await session.commit()
     return {'result': True}
@@ -58,13 +57,10 @@ async def delete_follow(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user_api_key: Any = await get_user_api_key(session, api_key)
-    follower: Any = await get_id_user(session, id_user)
+    user_api_key = await get_user_api_key(session, api_key)
+    follower = await get_id_user(session, id_user)
     if user_api_key is None or follower is None:
-        logger.error('There is no such user or follower')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user or follower."})
+        error_no_such('user or follower')
     user_api_key.following.remove(follower)
     await session.commit()
     return {'result': True}
@@ -80,13 +76,10 @@ async def get_user(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user: Any = await info_user_api_key(session, api_key)
+    user = await info_user_api_key(session, api_key)
     if user is None:
-        logger.error('There is no such user.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user."})
-    result: Any = await get_user_following(session, user)
+        error_no_such('user')
+    result = await get_user_following(session, user)
     return {'result': True, 'user': result}
 
 
@@ -100,11 +93,8 @@ async def get_user_id(
         id_user: Annotated[int, Path(title="The ID of the user to get")],
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user: Any = await info_user_id(session, id_user)
+    user = await info_user_id(session, id_user)
     if user is None:
-        logger.error('There is no such user.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user."})
-    result: Any = await get_user_following(session, user)
+        error_no_such('user')
+    result = await get_user_following(session, user)
     return {'result': True, 'user': result}

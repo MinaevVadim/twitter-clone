@@ -16,6 +16,8 @@ from schemas import TweetCreateBase, TweetResponseBase, ResultBase, ResponseCrea
 from models import Tweet, Like
 from services import get_user_api_key, get_tweet_one, get_likes, get_tweet_list, get_tweet_for_likes
 
+from my_application.utils import error_no_such
+
 logger: Logger = twitter_logging.add_logger(__name__)
 
 
@@ -36,8 +38,8 @@ async def get_all_tweets(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> dict[str, bool | list]:
-    tweet_list: Any = await get_tweet_list(session, api_key)
-    result: list = [i.to_json() for i in tweet_list]
+    tweet_list = await get_tweet_list(session, api_key)
+    result = [i.to_json() for i in tweet_list]
     return {'result': True, 'tweets': result}
 
 
@@ -57,12 +59,9 @@ async def create_tweet(
         - **tweet_data**: tweet content
         - **tweet_media_ids**: optional parameter for media
     """
-    user: Any = await get_user_api_key(session, api_key)
+    user = await get_user_api_key(session, api_key)
     if user is None:
-        logger.error('There is no such user.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user."})
+        error_no_such('user')
     add_new_tweet: Tweet = Tweet(
         content=tweet.tweet_data,
         author=user.id
@@ -83,12 +82,9 @@ async def delete_tweet(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db),
 ) -> JSONResponse | dict[str, bool]:
-    tweet: Any = await get_tweet_one(session, id_tweet, api_key)
+    tweet = await get_tweet_one(session, id_tweet, api_key)
     if tweet is None:
-        logger.error('There is no such tweet.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such tweet."})
+        error_no_such('tweet')
     await session.delete(tweet)
     await session.commit()
     return {'result': True}
@@ -105,14 +101,11 @@ async def create_like(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user: Any = await get_user_api_key(session, api_key)
-    tweet: Any = await get_tweet_for_likes(session, id_tweet)
+    user = await get_user_api_key(session, api_key)
+    tweet = await get_tweet_for_likes(session, id_tweet)
     if user is None or tweet is None:
-        logger.error('There is no such user or tweet.')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user or tweet."})
-    add_like: Like = Like(
+        error_no_such('user or tweet')
+    add_like = Like(
         user_id=user.id,
         tweet_id=tweet.id
     )
@@ -137,14 +130,11 @@ async def delete_like(
         api_key: Annotated[str | None, Header()] = None,
         session: AsyncSession = Depends(connect_db)
 ) -> JSONResponse | dict[str, bool]:
-    user: Any = await get_user_api_key(session, api_key)
-    tweet: Any = await get_tweet_for_likes(session, id_tweet)
+    user = await get_user_api_key(session, api_key)
+    tweet = await get_tweet_for_likes(session, id_tweet)
     if user is None or tweet is None:
-        logger.error('There is no such user or tweet')
-        return JSONResponse(
-            status_code=400,
-            content={"message": "There is no such user or tweet."})
-    likes: Any = await get_likes(session, user, tweet)
+        error_no_such('user or tweet')
+    likes = await get_likes(session, user, tweet)
     await session.delete(likes)
     await session.commit()
     return {'result': True}

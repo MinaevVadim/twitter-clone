@@ -38,11 +38,11 @@ templates: Jinja2Templates = Jinja2Templates(directory='templates')
 
 @app.middleware('http')
 async def logger_user(request: Any, call_next: Any) -> Coroutine:
-    api_key: Optional[str] = request.headers.get('api-key')
-    method: str = request.method
-    path: str = request.url.path
+    api_key = request.headers.get('api-key')
+    method = request.method
+    path = request.url.path
     logger.info(f'User with an * {api_key} * has entered the endpoint {method} {path}')
-    response: Any = await call_next(request)
+    response = await call_next(request)
     return response
 
 
